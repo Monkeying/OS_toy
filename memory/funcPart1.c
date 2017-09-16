@@ -1,5 +1,5 @@
 /*
-
+内存基础初始化功能
  */
 #include"memoryFuncLib.h"
 #include"MACRO.H"
