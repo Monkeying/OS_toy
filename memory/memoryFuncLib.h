@@ -2,6 +2,10 @@
 所有的函数包含
  */
 #include<stdio.h>
+#include "MACRO.H"
+//#include "basic_data_struct.h"
+#include "../sys_global.h"
+#include "../error/systemError.c"
 //===========================================================================<PART 1>======================================================================
 void Initialize(void);									//初始化模拟内存和磁盘的文件
 
@@ -20,16 +24,17 @@ void MaskBuffer(char *buffer, int numOfBit);				//置特定位图的值为1
 void ClearBuffer(char *buffer, int numOfBit);			//置特定位图的值为0
 
 //===========================================================================<PART 2>======================================================================
-int VirAddr2PhyAddr(char *processName, unsigned int virAddr, int rw);			//虚地址和实地址的转换
+int _write(char *processName, unsigned int virAddr, char ByteContent);				//写入字符
 
-int GetFirstPage(char *processName, unsigned int virAddr);						//获取一级页表项
+char _read(char *processName, unsigned int virAddr);						//读出字符
 
-int GetSecondPage(unsigned int firstPageAddr, unsigned int virAddr, int rw);	//获取二级页表项
+int VirAddr2LinnerAddr(char *processName, unsigned int virAddr);			//虚地址和实地址的转换
 
-int GetPage(unsigned int secondePageAddr, unsigned int virAddr, int rw);		//计算得到物理地址
+int GetPhyAddr(char *processName, int linnerAddr);						//由线性地址计算得到内存或磁盘中的物理地址
 
-int PageSwap(unsigned int page, unsigned int fatherPageAddr, int rw);			//页的换入/换出
+int PageSwap(unsigned int pageInDisk, unsigned int pageInMem);			//页的换入/换出
 
+unsigned int PageSwapStratgy(char *processName);//得到该段中可以换出的页表下标，FIFO
 int GetPageOutAddr(unsigned int addrOfPageIn);			//得到内存中换出页的地址，同时更新其上一级页表
 
 int CopyIntoMemory(unsigned int addrOfPageIn, unsigned int addrOfPageOut, int writeBack);	

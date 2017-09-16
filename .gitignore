@@ -1,2 +1,3 @@
-/memory/DISK.txt
-/memory/MEM.txt
+memory/*.txt
+
+/memory/*.txt

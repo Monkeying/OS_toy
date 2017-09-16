@@ -1,11 +1,9 @@
 /*
 内存基础初始化功能
  */
-#include"memoryFuncLib.h"
-#include"MACRO.H"
-#include"../sys_global.c"
-#include"../error/systemError.c"
-#include <stdio.h>
+#include "memoryFuncLib.h"
+#include <malloc.h>
+#include <time.h>
 
 void Initialize(void)									//初始化模拟内存和磁盘的文件
 {
@@ -16,6 +14,21 @@ void Initialize(void)									//初始化模拟内存和磁盘的文件
 		char *errorMsg = "MEM DISK Initialize FAILED. file could not open";
 		shutDownError(errorMsg);
 	}
+	
+	global.processEntryList = malloc(sizeof(struct processEntry));
+	char *s = "baseProcess";
+	global.processEntryList->processName = s;
+	global.processEntryList->size = PAGE_SIZE;//刚好一页
+	global.processEntryList->FirstPage = 0;//逻辑页中的第一页
+	global.processEntryList->nextProcess = NULL;
+
+	global.MMU[0] = malloc(sizeof(struct memPageRecord));
+	global.MMU[0]->page_num = 0;
+	global.MMU[0]->phyAddrInDisk = 1;//不是磁盘中出来的都直接位置等于1，/PAGE_SIZE != 0
+	time (&global.MMU[0]->timeStamp);
+	global.MMU[0]->isModified = 0;
+	global.MMU[0]->isReadable = 1;
+	global.memBuffer[0] = 1;
 }
 
 void BitMapToBuffer()	//把文件中的位图拷入到真正的内存数组中，使读取速度增快
@@ -110,7 +123,7 @@ int FindTotalFreeBufferMem()				//查找内存中所有空闲位图的数目总�
 	int i = 0;
 	unsigned int mask = 0;
 	mask = ~mask;
-	int sum = 0;
+	unsigned int sum = 0;
 	for (i = 0,sum = 0; i*sizeof(int) < (MEM_SIZE/PAGE_SIZE); i++)
 	{
 		if (temp[i] != mask)
@@ -160,3 +173,4 @@ int main()
 
 	return 0;
 }
+*/

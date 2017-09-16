@@ -1,8 +1,8 @@
 /*
 从MACRO中读取disk memd的大小信息，初始化内存/硬盘模拟文件
  */
-#include"MACRO.H"
-#include"../error/systemError.c"
+#include "MACRO.H"
+#include "../error/systemError.c"
 #include<stdio.h>
 
 int main()
@@ -32,7 +32,7 @@ int main()
 					{
 						for (i = 0; i < DISK_SIZE/PAGE_SIZE; i++)
 						{
-							global.diskBuffer[i] = 0;
+							fputc('\0',fp);	
 						}
 						return 1;//成功并返回1；
 					}					
