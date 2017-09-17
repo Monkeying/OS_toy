@@ -18,7 +18,6 @@ int CreateProcess(char *processName, int sizeInByte)		//创建一个进程
 		}	
 		if (strcmp(tempPtr->processName,processName) == 0)
 		{
-			printf("%s %s\n",tempPtr->processName,processName);
 			return -1;//该进程名称已存在
 		}
 	}
@@ -64,14 +63,25 @@ int FindProcssEntry(FILE *mem, char *processName);		//查找特定名字的进�
 
 char Read(char *processName, unsigned int virAddr);		//读进程
 
+
 main()
 {
 	Initialize();
 	if (CreateProcess("testProcess",4*PAGE_SIZE+100) >= 0 )
 	{
 		unsigned int i = _malloc("testProcess",4);
-		_write("testProcess", i, "four");
-		printf("read result :%s\n", _read("testProcess", i, 4));
+		int writeIn = 128;
+		_write("testProcess", i, sizeof(int), 1, &writeIn);
+		int readOut = 2;
+		_read("testProcess", i, sizeof(int), 1, &readOut);
+		printf("read after wrote %d result :%d\n", writeIn,readOut);
+
+		i = _malloc("testProcess", 5);
+		char *strIn = "hello";
+		_write("testProcess", i, sizeof(char), 5, strIn);
+		char strOut[5];//必须为已分配内存的数组不能是指针
+		_read("testProcess", i, sizeof(char), 5, strOut);
+		printf("read after wrote %s result :%s\n", strIn, strOut);
 	}
 
 	fclose(global.mem);
