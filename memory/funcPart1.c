@@ -4,6 +4,7 @@
 #include "memoryFuncLib.h"
 #include <malloc.h>
 #include <time.h>
+#include <string.h>
 
 void Initialize(void)									//初始化模拟内存和磁盘的文件
 {
@@ -16,10 +17,10 @@ void Initialize(void)									//初始化模拟内存和磁盘的文件
 	}
 	
 	global.processEntryList = malloc(sizeof(struct processEntry));
-	char *s = "baseProcess";
-	global.processEntryList->processName = s;
+	strcpy (global.processEntryList->processName, "baseProcess");
 	global.processEntryList->size = PAGE_SIZE;//刚好一页
-	global.processEntryList->FirstPage = 0;//逻辑页中的第一页
+	global.processEntryList->FirstPage = 0;//逻辑页面号0
+	global.processEntryList->byte2malloc = 0;//段内分配从0开始
 	global.processEntryList->nextProcess = NULL;
 
 	global.MMU[0] = malloc(sizeof(struct memPageRecord));
@@ -28,7 +29,14 @@ void Initialize(void)									//初始化模拟内存和磁盘的文件
 	time (&global.MMU[0]->timeStamp);
 	global.MMU[0]->isModified = 0;
 	global.MMU[0]->isReadable = 1;
-	global.memBuffer[0] = 1;
+
+	global.memBuffer[0] = 1;//mem的物理页面0被使用
+
+	global.linnerPageList = malloc(sizeof(struct linnerPageRecord));
+	global.linnerPageList->preLinnerPage = NULL;
+	global.linnerPageList->nextLinnerPage = NULL;
+	global.linnerPageList->firstLinnerPage_num = 1;//逻辑页面0已被baseProcess使用，下一段从逻辑页面1开始
+	global.linnerPageList->size = (MEM_SIZE + DISK_SIZE) / PAGE_SIZE - 1;//空闲逻辑长度为多少个页面长度
 }
 
 void BitMapToBuffer()	//把文件中的位图拷入到真正的内存数组中，使读取速度增快
@@ -56,7 +64,7 @@ void BitMapToBuffer()	//把文件中的位图拷入到真正的内存数组中�
 	}
 }
 
-void BufferToBitMap()	//把数组中的数据拷入到文件中的位图中，使得下次打开有正确的位图
+void BufferToBitMap()	//把数组中的数据拷入到文件中的位图中，使得下次打开有正确的页表位图
 {
 	FILE *fp;
 	fp = fopen("diskBuffer.txt","wb");//只写打开或建立一个二进制文件，只允许写数据
@@ -68,7 +76,7 @@ void BufferToBitMap()	//把数组中的数据拷入到文件中的位图中，�
 	fclose(fp);
 }
 
-int FindFreeBufferMem()					//查找内存中的第一个空闲位图
+int FindFreeBufferMem()					//查找内存中的第一个空闲页表位图
 {
 	unsigned int *temp = (unsigned int *)global.memBuffer;
 	int i = 0;

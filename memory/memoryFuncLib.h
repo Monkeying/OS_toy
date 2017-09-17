@@ -24,9 +24,9 @@ void MaskBuffer(char *buffer, int numOfBit);				//置特定位图的值为1
 void ClearBuffer(char *buffer, int numOfBit);			//置特定位图的值为0
 
 //===========================================================================<PART 2>======================================================================
-int _write(char *processName, unsigned int virAddr, char ByteContent);				//写入字符
+int _write(char *processName, unsigned int virAddr, char *ByteContent);				//写入字符
 
-char _read(char *processName, unsigned int virAddr);						//读出字符
+char *_read(char *processName, unsigned int virAddr, int length);						//读出字符
 
 int VirAddr2LinnerAddr(char *processName, unsigned int virAddr);			//虚地址和实地址的转换
 
@@ -51,7 +51,7 @@ int SetFatherPageWhenIn(unsigned int fatherPage, unsigned int newMemoryAddr, int
 int SetFatherPageWhenOut(unsigned int fatherPage, unsigned int newDiskAddr);	//当页面换出时，设置它的上级页表项，指向辅存地址，将P位置0
 
 //===========================================================================<PART 3>======================================================================
-void CreateProcess(char *processName, int size);		//创建一个进程
+int CreateProcess(char *processName, int sizeInByte);		//创建一个进程
 
 void DelProcess(char *processName);						//注销进程
 
