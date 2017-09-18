@@ -16,14 +16,14 @@ void Initialize(void)									//初始化模拟内存和磁盘的文件
 		shutDownError(errorMsg);
 	}
 	
-	global.processEntryList = malloc(sizeof(struct processEntry));
-	strcpy (global.processEntryList->processName, "baseProcess");
+	global.processEntryList = (struct processEntry *)malloc(sizeof(struct processEntry));
+	global.processEntryList->processName = 0;//初始基础进程的PID为0
 	global.processEntryList->size = PAGE_SIZE;//刚好一页
 	global.processEntryList->FirstPage = 0;//逻辑页面号0
 	global.processEntryList->byte2malloc = 0;//段内分配从0开始
 	global.processEntryList->nextProcess = NULL;
 
-	global.memMMU[0] = malloc(sizeof(struct memPageRecord));
+	global.memMMU[0] = (struct memPageRecord *)malloc(sizeof(struct memPageRecord));
 	global.memMMU[0]->page_num = 0;
 	global.memMMU[0]->phyAddrInDisk = 1;//不是磁盘中出来的都直接位置等于1，/PAGE_SIZE != 0
 	time (&global.memMMU[0]->timeStamp);
@@ -32,7 +32,7 @@ void Initialize(void)									//初始化模拟内存和磁盘的文件
 
 	global.memBuffer[0] = 1;//mem的物理页面0被使用
 
-	global.linnerPageList = malloc(sizeof(struct linnerPageRecord));
+	global.linnerPageList = (struct linnerPageRecord *)malloc(sizeof(struct linnerPageRecord));
 	global.linnerPageList->preLinnerPage = NULL;
 	global.linnerPageList->nextLinnerPage = NULL;
 	global.linnerPageList->firstLinnerPage_num = 1;//逻辑页面0已被baseProcess使用，下一段从逻辑页面1开始

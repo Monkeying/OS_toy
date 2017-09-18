@@ -24,17 +24,17 @@ void MaskBuffer(char *buffer, int numOfBit);				//置特定位图的值为1
 void ClearBuffer(char *buffer, int numOfBit);			//置特定位图的值为0
 
 //===========================================================================<PART 2>======================================================================
-int _write(char *processName, unsigned int virAddr, unsigned int size, unsigned int count, void *buffer);				//写入字符
+int _write(unsigned int virAddr, unsigned int size, unsigned int count, void *buffer);				//写入字符
 
-void *_read(char *processName, unsigned int virAddr, unsigned int size, unsigned int count);						//读出字符
+void *_read(unsigned int virAddr, unsigned int size, unsigned int count);						//读出字符
 
-int VirAddr2LinnerAddr(char *processName, unsigned int virAddr);			//虚地址和实地址的转换
+int VirAddr2LinnerAddr(unsigned int virAddr);			//虚地址和实地址的转换
 
-int GetPhyAddr(char *processName, int linnerAddr);						//由线性地址计算得到内存或磁盘中的物理地址
+int GetPhyAddr(unsigned char processName, int linnerAddr);						//由线性地址计算得到内存或磁盘中的物理地址
 
 int PageSwap(unsigned int pageInDisk, unsigned int pageInMem);			//页的换入/换出
 
-unsigned int PageSwapStratgy(char *processName);//得到该段中可以换出的页表下标，FIFO
+unsigned int PageSwapStratgy(unsigned char processName);//得到该段中可以换出的页表下标，FIFO
 int GetPageOutAddr(unsigned int addrOfPageIn);			//得到内存中换出页的地址，同时更新其上一级页表
 
 int CopyIntoMemory(unsigned int addrOfPageIn, unsigned int addrOfPageOut, int writeBack);	
@@ -51,9 +51,9 @@ int SetFatherPageWhenIn(unsigned int fatherPage, unsigned int newMemoryAddr, int
 int SetFatherPageWhenOut(unsigned int fatherPage, unsigned int newDiskAddr);	//当页面换出时，设置它的上级页表项，指向辅存地址，将P位置0
 
 //===========================================================================<PART 3>======================================================================
-int CreateProcess(char *processName, int sizeInByte);		//创建一个进程
+int CreateProcess(unsigned char processName, int sizeInByte);		//创建一个进程
 
-void DelProcess(char *processName);						//注销进程
+void DelProcess(unsigned char processName);						//注销进程
 
 void AllocFirstPage(FILE *men, int addr, int size, int *memBuffer, int *diskBuffer);	//分配进程的一级页表
 
@@ -61,7 +61,7 @@ void AllocSecondPage(FILE *mem, FILE *disk, int addr, int size, int MorD, int *m
 
 void AllocPageFrame(FILE *mem, int addr);				//分配进程的页
 
-void DelProcess(char *processName);						//删除特定名字的进程
+void DelProcess(unsigned char processName);						//删除特定名字的进程
 
 void DelFirstPage(FILE *mem, int addr, int size, int *memBuffer, int *diskBuffer);	//删除进程的一级页表
 

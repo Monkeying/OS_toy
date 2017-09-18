@@ -3,20 +3,20 @@
  */
 #include "funcPart2.c"
 
-int CreateProcess(char *processName, int sizeInByte)		//创建一个进程
+int CreateProcess(unsigned char processName, int sizeInByte)		//创建一个进程
 {
 	struct processEntry *tempPtr = global.processEntryList;
 	if (tempPtr != NULL)
 	{
 		while (tempPtr->nextProcess != NULL)
 		{
-			if (strcmp(tempPtr->processName, processName) == 0)
+			if (tempPtr->processName == processName)
 			{
 				return -1;//该进程名称已存在
 			}
 			tempPtr = tempPtr->nextProcess;
 		}	
-		if (strcmp(tempPtr->processName,processName) == 0)
+		if (tempPtr->processName == processName)
 		{
 			return -1;//该进程名称已存在
 		}
@@ -25,8 +25,8 @@ int CreateProcess(char *processName, int sizeInByte)		//创建一个进程
 	int firstLinnerPage_num = _mallocSegment(sizeInByte);
 	if (firstLinnerPage_num >= 0)
 	{
-		tempPtr->nextProcess = malloc(sizeof(struct processEntry));
-		strcpy(tempPtr->nextProcess->processName, processName);
+		tempPtr->nextProcess = (struct processEntry *)malloc(sizeof(struct processEntry));
+		tempPtr->nextProcess->processName = processName;
 		tempPtr->nextProcess->size = sizeInByte;
 		tempPtr->nextProcess->FirstPage = firstLinnerPage_num;//纪录该进程的虚拟段地址开始
 		tempPtr->nextProcess->byte2malloc = 0;//该进程的段内地址从0开始分配
@@ -40,17 +40,17 @@ int CreateProcess(char *processName, int sizeInByte)		//创建一个进程
 	}
 }
 
-void DelProcess(char *processName)						//注销进程
+void DelProcess(unsigned char processName)						//注销进程
 {
-	printf("try to DelProcess %s\n", processName);
+	printf("try to DelProcess %d\n", processName);
 	unsigned int i = 0;
-	struct processEntry *tempPtr = malloc(sizeof(struct processEntry));
+	struct processEntry *tempPtr = (struct processEntry *)malloc(sizeof(struct processEntry));
 	tempPtr->nextProcess =  global.processEntryList;
 	if (tempPtr != NULL)
 	{
 		while (tempPtr->nextProcess != NULL)
 		{
-			if (strcmp(tempPtr->nextProcess->processName, processName) == 0)
+			if (tempPtr->nextProcess->processName == processName)
 			{
 				int page_length = tempPtr->nextProcess->size / PAGE_SIZE + (tempPtr->nextProcess->size % PAGE_SIZE==0?0:1);	
 				_freeSegment(tempPtr->nextProcess->FirstPage, page_length);//释放这段逻辑地址,MMU,BUFFER								
@@ -63,7 +63,7 @@ void DelProcess(char *processName)						//注销进程
 			tempPtr = tempPtr->nextProcess;
 		}
 	}
-	printf("Deled %s\n", processName);
+	printf("Deled %d\n", processName);
 }
 
 void AllocFirstPage(FILE *men, int addr, int size, int *memBuffer, int *diskBuffer);	//分配进程的一级页表
@@ -72,7 +72,6 @@ void AllocSecondPage(FILE *mem, FILE *disk, int addr, int size, int MorD, int *m
 
 void AllocPageFrame(FILE *mem, int addr);				//分配进程的页
 
-void DelProcess(char *processName);						//删除特定名字的进程
 
 void DelFirstPage(FILE *mem, int addr, int size, int *memBuffer, int *diskBuffer);	//删除进程的一级页表
 
