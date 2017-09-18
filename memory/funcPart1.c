@@ -23,12 +23,12 @@ void Initialize(void)									//初始化模拟内存和磁盘的文件
 	global.processEntryList->byte2malloc = 0;//段内分配从0开始
 	global.processEntryList->nextProcess = NULL;
 
-	global.MMU[0] = malloc(sizeof(struct memPageRecord));
-	global.MMU[0]->page_num = 0;
-	global.MMU[0]->phyAddrInDisk = 1;//不是磁盘中出来的都直接位置等于1，/PAGE_SIZE != 0
-	time (&global.MMU[0]->timeStamp);
-	global.MMU[0]->isModified = 0;
-	global.MMU[0]->isReadable = 1;
+	global.memMMU[0] = malloc(sizeof(struct memPageRecord));
+	global.memMMU[0]->page_num = 0;
+	global.memMMU[0]->phyAddrInDisk = 1;//不是磁盘中出来的都直接位置等于1，/PAGE_SIZE != 0
+	time (&global.memMMU[0]->timeStamp);
+	global.memMMU[0]->isModified = 0;
+	global.memMMU[0]->isReadable = 1;
 
 	global.memBuffer[0] = 1;//mem的物理页面0被使用
 
@@ -78,23 +78,13 @@ void BufferToBitMap()	//把数组中的数据拷入到文件中的位图中，�
 
 int FindFreeBufferMem()					//查找内存中的第一个空闲页表位图
 {
-	unsigned int *temp = (unsigned int *)global.memBuffer;
+	//unsigned int *temp = (unsigned int *)global.memBuffer;
 	int i = 0;
-	unsigned int mask = 0;
-	mask = ~mask;
-	for (i = 0; i*( sizeof(int) / sizeof(char) ) < (MEM_SIZE/PAGE_SIZE); i++)
+	for (i = 0; i < (MEM_SIZE/PAGE_SIZE); i++)
 	{
-		if (temp[i] != mask)
+		if (global.memBuffer[i] != 1)
 		{
-			int offset = 0;
-			i = i * ( sizeof(int) / sizeof(char) );
-			for (offset = 0; offset < ( sizeof(int) / sizeof(char) ); offset++)
-			{
-				if (global.memBuffer[i + offset] == 0)
-				{
-					return i + offset;
-				}
-			}
+			return i;
 		}
 	}
 	return -1;//无空闲，返回-1

@@ -26,7 +26,7 @@ void ClearBuffer(char *buffer, int numOfBit);			//置特定位图的值为0
 //===========================================================================<PART 2>======================================================================
 int _write(char *processName, unsigned int virAddr, unsigned int size, unsigned int count, void *buffer);				//写入字符
 
-void _read(char *processName, unsigned int virAddr, unsigned int size, unsigned int count, const void *resultBuffer);						//读出字符
+void *_read(char *processName, unsigned int virAddr, unsigned int size, unsigned int count);						//读出字符
 
 int VirAddr2LinnerAddr(char *processName, unsigned int virAddr);			//虚地址和实地址的转换
 

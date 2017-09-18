@@ -42,7 +42,28 @@ int CreateProcess(char *processName, int sizeInByte)		//创建一个进程
 
 void DelProcess(char *processName)						//注销进程
 {
-	;
+	printf("try to DelProcess %s\n", processName);
+	unsigned int i = 0;
+	struct processEntry *tempPtr = malloc(sizeof(struct processEntry));
+	tempPtr->nextProcess =  global.processEntryList;
+	if (tempPtr != NULL)
+	{
+		while (tempPtr->nextProcess != NULL)
+		{
+			if (strcmp(tempPtr->nextProcess->processName, processName) == 0)
+			{
+				int page_length = tempPtr->nextProcess->size / PAGE_SIZE + (tempPtr->nextProcess->size % PAGE_SIZE==0?0:1);	
+				_freeSegment(tempPtr->nextProcess->FirstPage, page_length);//释放这段逻辑地址,MMU,BUFFER								
+				
+				struct processEntry *temp = tempPtr->nextProcess;				
+				tempPtr->nextProcess = tempPtr->nextProcess->nextProcess;
+				free(temp);//释放真实系统中的processEntry项
+				break;
+			}
+			tempPtr = tempPtr->nextProcess;
+		}
+	}
+	printf("Deled %s\n", processName);
 }
 
 void AllocFirstPage(FILE *men, int addr, int size, int *memBuffer, int *diskBuffer);	//分配进程的一级页表
@@ -63,7 +84,7 @@ int FindProcssEntry(FILE *mem, char *processName);		//查找特定名字的进�
 
 char Read(char *processName, unsigned int virAddr);		//读进程
 
-
+/*
 main()
 {
 	Initialize();
@@ -73,17 +94,18 @@ main()
 		int writeIn = 128;
 		_write("testProcess", i, sizeof(int), 1, &writeIn);
 		int readOut = 2;
-		_read("testProcess", i, sizeof(int), 1, &readOut);
+		readOut = *((int *)_read("testProcess", i, sizeof(int), 1));
 		printf("read after wrote %d result :%d\n", writeIn,readOut);
 
 		i = _malloc("testProcess", 5);
 		char *strIn = "hello";
 		_write("testProcess", i, sizeof(char), 5, strIn);
-		char strOut[5];//必须为已分配内存的数组不能是指针
-		_read("testProcess", i, sizeof(char), 5, strOut);
+		char *strOut;
+		strOut = (char *)_read("testProcess", i, sizeof(char), 5);
 		printf("read after wrote %s result :%s\n", strIn, strOut);
 	}
 
 	fclose(global.mem);
 	fclose(global.disk);
 }
+*/
