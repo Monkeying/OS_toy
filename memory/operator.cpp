@@ -6,23 +6,23 @@
 class _int//返回段内地址，进程名称默认为main. -1内存已满，-2程序不存在
 {
 public:
-	_int addr;
+	int addr;
 
-	_int(unsigned _char processName)
+	_int(unsigned char processName)
 	{
-		this->addr = _malloc(processName, sizeof(_int));
+		this->addr = _malloc(processName, sizeof(int));
 		if (this < 0)
 		{
-			pr_intf("申请失败\n");
+			printf("申请失败\n");
 			this->~_int();
 		}
 	}
-	_int(_int addr)
+	_int(int addr)
 	{
 		this->addr = addr;
 		if (this < 0)
 		{
-			pr_intf("申请失败\n");
+			printf("申请失败\n");
 			this->~_int();
 		}
 	}
@@ -30,14 +30,14 @@ public:
 	{
 		_free(this->addr);
 	}
-	bool setAddr(unsigned _int addr)
+	bool setAddr(unsigned int addr)
 	{
 		this->addr = addr;
 		return  1;
 	}
-	_int operator +()
+	int operator +()
 	{
-		_int *temp = (_int *)_read(this->addr,sizeof(_int), 1);
+		int *temp = (int *)_read(this->addr,sizeof(int), 1);
 		return *temp;
 	}
 	_int * operator &()
@@ -45,76 +45,76 @@ public:
 		//return this->addr;
 		return this;
 	}	
-	void operator =(_int num)//注意和申请语句分开，这个只有赋值功能
+	void operator =(int num)//注意和申请语句分开，这个只有赋值功能
 	{
-		_write(this->addr,sizeof(_int), 1, &num);
+		_write(this->addr,sizeof(int), 1, &num);
 	}
-	_int operator +(_int num)
+	int operator +(int num)
 	{
-		_int *temp = (_int *)_read(this->addr,sizeof(_int), 1);
+		int *temp = (int *)_read(this->addr,sizeof(int), 1);
 		*temp = *temp + num;
 		return *temp;
 	}
-	_int operator -(_int num)
+	int operator -(int num)
 	{
-		_int *temp = (_int *)_read(this->addr,sizeof(_int), 1);
+		int *temp = (int *)_read(this->addr,sizeof(int), 1);
 		*temp = *temp - num;
 		return *temp;
 	}
-	_int operator *(_int num)
+	int operator *(int num)
 	{
-		_int *temp = (_int *)_read(this->addr,sizeof(_int), 1);
+		int *temp = (int *)_read(this->addr,sizeof(int), 1);
 		*temp = (*temp) * num;
 		return *temp;
 	}
-	_int operator /(_int num)
+	int operator /(int num)
 	{
-		_int *temp = (_int *)_read(this->addr,sizeof(_int), 1);
+		int *temp = (int *)_read(this->addr,sizeof(int), 1);
 		*temp = *temp / num;
 		return *temp;
 	}
-	_int operator %(_int num)
+	int operator %(int num)
 	{
-		_int *temp = (_int *)_read(this->addr,sizeof(_int), 1);
+		int *temp = (int *)_read(this->addr,sizeof(int), 1);
 		*temp = *temp % num;
 		return *temp;
 	}
-	_int operator ++(_int)
+	int operator ++(int)
 	{
-		_int *temp = (_int *)_read(this->addr,sizeof(_int), 1);
+		int *temp = (int *)_read(this->addr,sizeof(int), 1);
 		*temp = *temp + 1;
-		_write(this->addr,sizeof(_int), 1, temp);
-		temp = (_int *)_read(this->addr,sizeof(_int), 1);
+		_write(this->addr,sizeof(int), 1, temp);
+		temp = (int *)_read(this->addr,sizeof(int), 1);
 		return *temp;
 	}
-	void operator +=(_int num)
+	void operator +=(int num)
 	{
-		_int *temp = (_int *)_read(this->addr,sizeof(_int), 1);
+		int *temp = (int *)_read(this->addr,sizeof(int), 1);
 		*temp = *temp + num;
-		_write(this->addr,sizeof(_int), 1, temp);
-		temp = (_int *)_read(this->addr,sizeof(_int), 1);
+		_write(this->addr,sizeof(int), 1, temp);
+		temp = (int *)_read(this->addr,sizeof(int), 1);
 	}
-	bool operator <(_int num)
+	bool operator <(int num)
 	{
-		_int *temp = (_int *)_read(this->addr,sizeof(_int), 1);
+		int *temp = (int *)_read(this->addr,sizeof(int), 1);
 		if (*temp < num)
 		{
 			return 1;
 		}
 		return 0;
 	}
-	bool operator >(_int num)
+	bool operator >(int num)
 	{
-		_int *temp = (_int *)_read(this->addr,sizeof(_int), 1);
+		int *temp = (int *)_read(this->addr,sizeof(int), 1);
 		if (*temp > num)
 		{
 			return 1;
 		}
 		return 0;
 	}
-	bool operator ==(_int num)
+	bool operator ==(int num)
 	{
-		_int *temp = (_int *)_read(this->addr,sizeof(_int), 1);
+		int *temp = (int *)_read(this->addr,sizeof(int), 1);
 		if (*temp == num)
 		{
 			return 1;
@@ -125,14 +125,14 @@ public:
 class _char
 {
 public:
-	_int addr;
+	int addr;
 
-	_char(unsigned _char processName)
+	_char(unsigned char processName)
 	{
-		this->addr = _malloc(processName, sizeof(_char));
+		this->addr = _malloc(processName, sizeof(char));
 		if (this < 0)
 		{
-			pr_intf("申请失败\n");
+			printf("申请失败\n");
 			this->~_char();
 		}
 	}
@@ -140,121 +140,122 @@ public:
 	{
 		_free(this->addr);
 	}
-	_int operator *()
+	int operator *()
 	{
-		_char *temp = (_char *)_read(this->addr,sizeof(_char), 1);
+		char *temp = (char *)_read(this->addr,sizeof(char), 1);
 		return *temp;
 	}
-	_int operator &()
+	_char * operator &()
 	{
-		return this->addr;
+		//return this->addr;
+		return this;
 	}
-	void operator =(_char _character)//注意和申请语句分开，这个只有赋值功能
+	void operator =(char character)//注意和申请语句分开，这个只有赋值功能
 	{
-		_write(this->addr,sizeof(_char), 1, &_character);
+		_write(this->addr,sizeof(char), 1, &character);
 	}
-	_int operator +(_int num)
+	int operator +(int num)
 	{
-		_char *temp = (_char *)_read(this->addr,sizeof(_char), 1);
+		char *temp = (char *)_read(this->addr,sizeof(char), 1);
 		*temp = *temp + num;
 		return *temp;
 	}
-	_int operator -(_int num)
+	int operator -(int num)
 	{
-		_char *temp = (_char *)_read(this->addr,sizeof(_char), 1);
+		char *temp = (char *)_read(this->addr,sizeof(char), 1);
 		*temp = *temp - num;
 		return *temp;
 	}
-	bool operator <(_int num)
+	bool operator <(int num)
 	{
-		_int *temp = (_int *)_read(this->addr,sizeof(_int), 1);
+		char *temp = (char *)_read(this->addr,sizeof(char), 1);
 		if (*temp < num)
 		{
 			return 1;
 		}
 		return 0;
 	}
-	bool operator >(_int num)
+	bool operator >(int num)
 	{
-		_int *temp = (_int *)_read(this->addr,sizeof(_int), 1);
+		char *temp = (char *)_read(this->addr,sizeof(char), 1);
 		if (*temp > num)
 		{
 			return 1;
 		}
 		return 0;
 	}
-	bool operator ==(_int num)
+	bool operator ==(int num)
 	{
-		_int *temp = (_int *)_read(this->addr,sizeof(_int), 1);
+		char *temp = (char *)_read(this->addr,sizeof(char), 1);
 		if (*temp == num)
 		{
 			return 1;
 		}
 		return 0;
 	}
-	bool operator ==(_char _character)
+	bool operator ==(char character)
 	{
-		_char *temp = (_char *)_read(this->addr,sizeof(_char), 1);
-		if (*temp == _character)
+		char *temp = (char *)_read(this->addr,sizeof(char), 1);
+		if (*temp == character)
 		{
 			return 1;
 		}
 		return 0;
 	}
-	bool operator >(_char _character)
+	bool operator >(char character)
 	{
-		_char *temp = (_char *)_read(this->addr,sizeof(_char), 1);
-		if (*temp > _character)
+		char *temp = (char *)_read(this->addr,sizeof(char), 1);
+		if (*temp > character)
 		{
 			return 1;
 		}
 		return 0;
 	}
-	bool operator <(_char _character)
+	bool operator <(char character)
 	{
-		_char *temp = (_char *)_read(this->addr,sizeof(_char), 1);
-		if (*temp < _character)
+		char *temp = (char *)_read(this->addr,sizeof(char), 1);
+		if (*temp < character)
 		{
 			return 1;
 		}
 		return 0;
 	}
 };
-class _int_ARRAY
+class int_ARRAY
 {
 public:
-	_int addr;
-	unsigned _int count;
+	int addr;
+	unsigned int count;
 
-	_int_ARRAY(unsigned _char processName, unsigned _int count)
+	int_ARRAY(unsigned char processName, unsigned int count)
 	{
-		this->addr = _malloc(processName, sizeof(_int)*count);
+		this->addr = _malloc(processName, sizeof(int)*count);
 		this->count = count;
 		if (this->addr < 0)
 		{
-			pr_intf("申请失败\n");
-			this->~_int_ARRAY();
+			printf("申请失败\n");
+			this->~int_ARRAY();
 		}
 	}
-	~_int_ARRAY()
+	~int_ARRAY()
 	{
 		_free(this->addr);
 	}
-	_int * operator &()
+	int * operator &()
 	{
-		_int *temp = (_int *)_read(this->addr,sizeof(_int), this->count);
+		int *temp = (int *)_read(this->addr,sizeof(int), this->count);
 		return temp;
 	}
-	_int operator [](unsigned _int i)//仅仅能够读取，不能赋值
+	int operator [](unsigned int i)//仅仅能够读取，不能赋值
 	{
-		_int *temp = (_int *)_read(this->addr + i * sizeof(_int), sizeof(_int), 1);
+		int *temp = (int *)_read(this->addr + i * sizeof(int), sizeof(int), 1);
 		return *temp;
 	}
-	bool assignment(unsigned _int i, _int value)
+	bool assignment(unsigned int i, int value)
 	{
-		if (_write(this->addr + i * sizeof(_int), sizeof(_int), 1, &value))
+		if (_write(this->addr + i * sizeof(int), sizeof(int), 1, &value))
 		{
-			_int *temp = (_int *)_read(this->addr + i * sizeof(_int),sizeof(_int), 1);
+			int *temp = (int *)_read(this->addr + i * sizeof(int),sizeof(int), 1);
 			return 1;
 		}	
 		else
@@ -264,40 +265,40 @@ public:
 	}
 };
 
-_int main()
+int main()
 {
 	Initialize();
-	unsigned _char pid = 1;
+	unsigned char pid = 1;
 	CreateProcess(pid, PAGE_SIZE);
 
-	_int i = _int(pid);
+	int i = int(pid);
 	i = -100;
-	pr_intf("%d\n",+i);
+	printf("%d\n",+i);
 	i = 200;
-	pr_intf("%d\n",+i);
+	printf("%d\n",+i);
 	for (i = 0; i < 5; i++)
 	{
-		pr_intf("%d\n",+i);	
+		printf("%d\n",+i);	
 	}
 
-	_int_ARRAY a = _int_ARRAY(pid, 5);
+	int_ARRAY a = int_ARRAY(pid, 5);
 	for (i = 0; i < 5; i++)
 	{
 		a.assignment(+i, +i);
-		pr_intf("%d\n",a[+i]);
+		printf("%d\n",a[+i]);
 	}
 }
 /*
-_int main()
+int main()
 {
 	Initialize();
-	_int pid = 1;
+	int pid = 1;
 	CreateProcess(pid,PAGE_SIZE);
 	VARIABLE i;
-	_int(i,pid);
+	int(i,pid);
 	for (i = 0; i < 5; i++)
 	{
-		pr_intf("done\n");
+		printf("done\n");
 	}	
 }
 */
