@@ -15,7 +15,10 @@ int _write(unsigned int virAddr, unsigned int size, unsigned int count, void *bu
 	unsigned char processName = (virAddr & 0xff000000)>>24;
 	int linnerAddr = VirAddr2LinnerAddr(virAddr);//获取线性地址,在非分页结构下，等同于物理地址
 	if (linnerAddr < 0)
+	{
+		printf("linner Addr %d virAddr %d\n", linnerAddr,virAddr);
 		return -1;
+	}
 	int length = size * count;
 	int linnerPage = linnerAddr / PAGE_SIZE;
 	if ((linnerAddr + length) / PAGE_SIZE > linnerPage)//跨页
@@ -333,13 +336,15 @@ int _malloc(unsigned char processName, int sizeInByte)//一个程序段内的分
 		{
 			for ( i = tempPtr->FirstPage * PAGE_SIZE; i< tempPtr->FirstPage * PAGE_SIZE + tempPtr->size; i++)
 			{
-				printf("1\n");
 				if (tempPtr->byte2malloc + sizeInByte <= tempPtr->size)//段内偏移地址
-				{
+				{					
+					int segment_offset = tempPtr->byte2malloc;//返回段内偏移地址
 					tempPtr->byte2malloc += sizeInByte;
-					int segment_offset = tempPtr->byte2malloc - sizeInByte;//返回段内偏移地址
 					if (segment_offset <= 0x00ffffff)
-						return processName<<24 + segment_offset;//8bit进程标识符+24bit段内偏移
+					{
+						int virAddr = (processName<<24) + segment_offset;
+						return virAddr;//8bit进程标识符+24bit段内偏移
+					}
 					else
 					{
 						return -3;//超过段最大长度
@@ -364,6 +369,8 @@ int VirAddr2LinnerAddr(unsigned int virAddr)			//虚地址和实地址的转换
 
 	int i = 0;
 	int linnerAddr = 0;
+
+	//printf("processName in VirAddr2LinnerAddr %d\n", processName);
 	struct processEntry *tempPtr = global.processEntryList;
 	while (tempPtr != NULL)
 	{
