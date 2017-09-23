@@ -2,7 +2,7 @@
 内存模块测试程序
  */
 #include "funcPart3.c"
-
+#include "operator.cpp"
 typedef unsigned int ADDR; 
 
 main()
@@ -10,9 +10,8 @@ main()
 	Initialize();
 	int segmentAddr = 0;
 	struct linnerPageRecord * tempPtr = global.linnerPageList;
-	unsigned char testProcess1 = 1, testProcess2 = 2, testProcess3 = 3, testProcess4 = 4,testProcess5 = 5, testProcess6 = 6;
-	//========================================测试段地址的分配回收
-	
+	int testProcess1 = 1, testProcess2 = 2, testProcess3 = 3, testProcess4 = 4,testProcess5 = 5, testProcess6 = 6;
+	//========================================测试段地址的分配回收	
 	{
 		segmentAddr = CreateProcess(testProcess1,3*PAGE_SIZE+100);//结果应该为4096
 
@@ -129,5 +128,19 @@ main()
 		else{//段地址分配失败
 			printf("testProcess1 CreateProcess failed return %d\n",segmentAddr);
 		}
+	}
+	//
+	{
+		segmentAddr = CreateProcess(101, PAGE_SIZE);
+		_int a101 = _int(101);
+		a101 = 101;
+		segmentAddr = CreateProcess(102, PAGE_SIZE);
+		_int a102 = _int(102);
+		a102 = 102;
+		segmentAddr = CreateProcess(103, PAGE_SIZE);
+		_int a103 = _int(103);
+		a103 = 103;
+		
+		printf("%d %d %d", +a101, +a102, +a103);
 	}
 }

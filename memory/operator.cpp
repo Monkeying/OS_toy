@@ -8,18 +8,13 @@ class _int//返回段内地址，进程名称默认为main. -1内存已满，-2�
 public:
 	int addr;
 
+	_int()
+	{
+		this->addr = -1;
+	}
 	_int(unsigned char processName)
 	{
 		this->addr = _malloc(processName, sizeof(int));
-		if (this < 0)
-		{
-			printf("申请失败\n");
-			this->~_int();
-		}
-	}
-	_int(int addr)
-	{
-		this->addr = addr;
 		if (this < 0)
 		{
 			printf("申请失败\n");
@@ -48,6 +43,10 @@ public:
 	void operator =(int num)//注意和申请语句分开，这个只有赋值功能
 	{
 		_write(this->addr,sizeof(int), 1, &num);
+	}
+	void operator =(_int copy)
+	{
+		this->addr = copy.addr;
 	}
 	int operator +(int num)
 	{
@@ -127,6 +126,10 @@ class _char
 public:
 	int addr;
 
+	_char()
+	{
+		this->addr = -1;
+	}
 	_char(unsigned char processName)
 	{
 		this->addr = _malloc(processName, sizeof(char));
@@ -151,7 +154,7 @@ public:
 		return this;
 	}
 	void operator =(char character)//注意和申请语句分开，这个只有赋值功能
-	{
+	{		
 		_write(this->addr,sizeof(char), 1, &character);
 	}
 	int operator +(int num)
@@ -277,6 +280,10 @@ public:
 	unsigned int lines;
 	unsigned int columns;
 
+	int_ARRAY_ARRAY()
+	{
+		this->addr = NULL;
+	}
 	int_ARRAY_ARRAY(unsigned char processName, unsigned int lines, unsigned int columns)
 	{
 		int i = 0;
@@ -309,7 +316,7 @@ public:
 
 int main()
 {
-	Initialize();
+	Initialize();//内存初始化
 	unsigned char pid = 1;
 	CreateProcess(pid, PAGE_SIZE);
 
@@ -338,6 +345,18 @@ int main()
 		printf("%d %d\n",array[+i][0],array[+i][1]);
 	}
 
+	{
+		int segmentAddr = CreateProcess(100, PAGE_SIZE);		
+		segmentAddr = CreateProcess(101, PAGE_SIZE);
+		segmentAddr = CreateProcess(102, PAGE_SIZE);
+		_int a101 = _int(101);
+		_int a102 = _int(102);
+		_int a100 = _int(100);
+		a101 = 101;				
+		a102 = 102;		
+		a100 = 100;
+		printf("%d %d %d", +a100, +a101, +a102);
+	}
 	return 0;
 }
 /*

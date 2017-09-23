@@ -52,7 +52,8 @@ int _write(unsigned int virAddr, unsigned int size, unsigned int count, void *bu
 								Buffer = &((char *)buffer)[result_offset];
 						}
 						fseek(global.mem, phyAddr, 0);							
-						fwrite(Buffer, size, count, global.mem);		
+						fwrite(Buffer, size, count, global.mem);
+						global.memMMU[phyAddr / PAGE_SIZE]->isModified = 1;//该页已经进行过修改，待会换页的时候需要进行写回		
 						result_offset += count;				
 						break;											
 					}				
@@ -85,7 +86,9 @@ int _write(unsigned int virAddr, unsigned int size, unsigned int count, void *bu
 			if (size == 1 && count > 1)//字符串
 			{
 				fputc('0',global.mem);
-			}									
+			}		
+			int i = 0;						
+			global.memMMU[phyAddr / PAGE_SIZE]->isModified = 1;//该页已经进行过修改，待会换页的时候需要进行写回
 		}
 	}
 	return 1;
@@ -150,9 +153,8 @@ void *_read(unsigned int virAddr, unsigned int size, unsigned int count)//读出
 	return buffer;
 }
 
-int _mallocSegment(int sizeInByte)//申请一段地址，返回逻辑段首页逻辑页号
+int _mallocSegment(int sizeInByte)//申请一段地址，返回逻辑段首页逻辑页号 //首次适应逻辑页面分配法
 {
-	//首次适应逻辑页面分配
 	struct linnerPageRecord *tempPtr = global.linnerPageList;
 	int sizeInpage = sizeInByte / PAGE_SIZE + (sizeInByte % PAGE_SIZE==0 ? 0 : 1); 
 	while (tempPtr != NULL)//遍历逻辑页表空间
@@ -453,7 +455,7 @@ int GetPhyAddr(unsigned char processName, int linnerAddr)		//由线性地址计�
 
 int PageSwap(unsigned int pageInDisk, unsigned int pageInMem, unsigned int linnerPage_num)			//页的换入/换出
 {
-	//printf(" PAGESWAP  inDisk:%d inMem:%d\n",pageInDisk,pageInMem);
+	printf(" PAGESWAP  inDisk:%d inMem:%d\n",pageInDisk,pageInMem);
 	char temp;
 	int i = 0;
 	if (global.memMMU[pageInMem] == NULL)//相当于直接从磁盘读入内存
@@ -478,10 +480,10 @@ int PageSwap(unsigned int pageInDisk, unsigned int pageInMem, unsigned int linne
 	}
 
 	unsigned int phyAddrInDisk = pageInDisk * PAGE_SIZE;
-	fseek(global.disk, phyAddrInDisk, 0);
-	fseek(global.mem,  pageInMem * PAGE_SIZE, 0);
 	char tempPageDisk[PAGE_SIZE] = {0};
 	char tempPageMem[PAGE_SIZE] = {0};
+	fseek(global.disk, phyAddrInDisk, 0);
+	fseek(global.mem,  pageInMem * PAGE_SIZE, 0);
 	for (i = 0; i < PAGE_SIZE; i++)//从磁盘中读出一页写入到内存
 	{
 		tempPageDisk[i] = fgetc(global.disk);//从磁盘读出
@@ -491,7 +493,7 @@ int PageSwap(unsigned int pageInDisk, unsigned int pageInMem, unsigned int linne
 	fseek(global.mem,  pageInMem * PAGE_SIZE, 0);
 	for (i = 0; i < PAGE_SIZE; i++)//从磁盘中读出一页写入到内存
 	{
-		fputc(tempPageMem[i], global.disk);//写入磁盘读出
+		fputc(tempPageMem[i], global.disk);//写入磁盘
 		fputc(tempPageDisk[i], global.mem);//写入内存
 	}
 
