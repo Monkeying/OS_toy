@@ -3,7 +3,6 @@
  */
 #include "memory/MACRO.h"
 #include "memory/basic_data_struct.h"
-#include "process/MACRO.h"
 
 #include<stdio.h>
 

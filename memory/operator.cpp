@@ -241,10 +241,15 @@ public:
 	{
 		_free(this->addr);
 	}
-	int * operator &()
+	int_ARRAY * operator &()
 	{
-		int *temp = (int *)_read(this->addr,sizeof(int), this->count);
-		return temp;
+		//int *temp = (int *)_read(this->addr,sizeof(int), this->count);
+		//return temp;
+		return this;
+	}
+	unsigned int getAddr()
+	{
+		return this->addr;
 	}
 	int operator [](unsigned int i)//仅仅能够读取，不能赋值
 	{
@@ -262,6 +267,43 @@ public:
 		{
 			return 0;
 		}	
+	}
+};
+
+class int_ARRAY_ARRAY
+{
+public:
+	int_ARRAY *addr;
+	unsigned int lines;
+	unsigned int columns;
+
+	int_ARRAY_ARRAY(unsigned char processName, unsigned int lines, unsigned int columns)
+	{
+		int i = 0;
+		this->addr = (int_ARRAY *)malloc(sizeof(int_ARRAY *)*lines);
+		for (i = 0; i < lines; i++)
+		{
+			this->addr[i] = int_ARRAY(processName, columns);			
+		}
+		this->columns = columns;
+		this->lines = lines;
+		if (this->addr < 0)
+		{
+			printf("申请失败\n");
+			this->~int_ARRAY_ARRAY();
+		}
+	}
+	~int_ARRAY_ARRAY()
+	{
+		;//_free(this->addr);
+	}
+	int_ARRAY operator [](unsigned int i)//仅仅能够读取，不能赋值
+	{		
+		return this->addr[i];
+	}
+	bool assignment(unsigned int lines, unsigned int columns, int value)
+	{
+		return this->addr[lines].assignment(columns, value);
 	}
 };
 
@@ -287,14 +329,16 @@ int main()
 		a.assignment(+i, +i);
 		printf("%d\n",a[+i]);
 	}
-	int_ARRAY *array = &int_ARRAY(pid, 5*2);
+	int_ARRAY_ARRAY array = int_ARRAY_ARRAY(pid, 5,3);
 	for (i = 0; i < 5; i++)	
 	{
-		array[+i][0].assignment(+i, +i);
-		array[+i][1].assignment(+i, (+i) + 1);
+		array.assignment(+i, 0, +i);
+		array.assignment(+i, 1,(+i) + 1);
 		
-		printf("%d %d\n",a[+i][0],a[+i][1]);
+		printf("%d %d\n",array[+i][0],array[+i][1]);
 	}
+
+	return 0;
 }
 /*
 int main()
