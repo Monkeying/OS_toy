@@ -12,6 +12,7 @@ main()
 	struct linnerPageRecord * tempPtr = global.linnerPageList;
 	unsigned char testProcess1 = 1, testProcess2 = 2, testProcess3 = 3, testProcess4 = 4,testProcess5 = 5, testProcess6 = 6;
 	//========================================测试段地址的分配回收
+	
 	{
 		segmentAddr = CreateProcess(testProcess1,3*PAGE_SIZE+100);//结果应该为4096
 
@@ -95,9 +96,11 @@ main()
 	}
 	//=======================================================测试段内变量的地址分配，读写
 	{
-		segmentAddr = CreateProcess(testProcess1,PAGE_SIZE);
+		int segmentAddr = CreateProcess(111,4*PAGE_SIZE);
+		segmentAddr = CreateProcess(testProcess1,4*PAGE_SIZE);
 		if (segmentAddr > 0){//段地址分配成功
 			printf("testProcess1 segmentAddr %d(4096)\n",segmentAddr);
+
 			//字符
 			ADDR _char = _malloc(testProcess1,sizeof(char)*1);
 			printf("_char %x\n",_char);
@@ -105,8 +108,8 @@ main()
 			printf("after write a, read result: %c\n", *((char *)_read(_char,sizeof(char),1)));
 			//字符串
 			ADDR _chars = _malloc(testProcess1,sizeof(char)*10);
-			_write(_char,sizeof(char),11,"helloWorld\0");
-			printf("after write helloWorld, read result: %s\n", (char *)_read(_char,sizeof(char),11));
+			_write(_chars,sizeof(char),11,"helloWorld\0");
+			printf("after write helloWorld, read result: %s\n", (char *)_read(_chars,sizeof(char),11));
 			//整数
 			int input = -2017;
 			ADDR _int = _malloc(testProcess1,sizeof(int)*1);

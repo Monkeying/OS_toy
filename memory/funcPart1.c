@@ -16,6 +16,8 @@ void Initialize(void)									//初始化模拟内存和磁盘的文件
 		shutDownError(errorMsg);
 	}
 	
+	BitMapToBuffer();//将磁盘的存储情况读入，初始化内存空闲情况
+
 	global.processEntryList = (struct processEntry *)malloc(sizeof(struct processEntry));
 	global.processEntryList->processName = 0;//初始基础进程的PID为0
 	global.processEntryList->size = PAGE_SIZE;//刚好一页
@@ -37,19 +39,17 @@ void Initialize(void)									//初始化模拟内存和磁盘的文件
 	global.linnerPageList->nextLinnerPage = NULL;
 	global.linnerPageList->firstLinnerPage_num = 1;//逻辑页面0已被baseProcess使用，下一段从逻辑页面1开始
 	global.linnerPageList->size = (MEM_SIZE + DISK_SIZE) / PAGE_SIZE - 1;//空闲逻辑长度为多少个页面长度
+
+	global.diskSwapedPageList = NULL;//交换页表对应关系清零
 }
 
 void BitMapToBuffer()	//把文件中的位图拷入到真正的内存数组中，使读取速度增快
 {
 	FILE *fp;
 	fp = fopen("diskBuffer.txt","rb");//只读打开一个二进制文件，只允许读数据
-	int i = 0;
 	if (fp != NULL)//从文件中读入上次硬盘的位图情况
 	{
-		for (i = 0; i < DISK_SIZE/PAGE_SIZE; i++)
-		{
-			global.diskBuffer[i] = fgetc(fp);
-		}
+		fread(global.diskBuffer, sizeof(char), DISK_SIZE/PAGE_SIZE, fp);
 		fclose(fp);
 	}
 	else
@@ -58,21 +58,18 @@ void BitMapToBuffer()	//把文件中的位图拷入到真正的内存数组中�
 		shutDownError(errorMsg);
 	}
 	
+	int i = 0;
 	for (i = 0; i < MEM_SIZE/PAGE_SIZE; i++)//内存位图全部清零
 	{
 		global.memBuffer[i] = 0;
-	}
+	}	
 }
 
 void BufferToBitMap()	//把数组中的数据拷入到文件中的位图中，使得下次打开有正确的页表位图
 {
 	FILE *fp;
 	fp = fopen("diskBuffer.txt","wb");//只写打开或建立一个二进制文件，只允许写数据
-	int i = 0;
-	for (i = 0; i < DISK_SIZE/PAGE_SIZE; i++)
-	{
-		fputc(global.diskBuffer[i], fp);
-	}
+	fwrite(global.diskBuffer, sizeof(char), DISK_SIZE/PAGE_SIZE, fp);
 	fclose(fp);
 }
 
@@ -92,24 +89,12 @@ int FindFreeBufferMem()					//查找内存中的第一个空闲页表位图
 
 int FindFreeBufferDisk()				//查找硬盘中的第一个空闲位图
 {
-	unsigned int *temp = (unsigned int *)global.diskBuffer;
 	int i = 0;
-	unsigned int mask = 0;
-	mask = ~mask;
-	for (i = 0; i*( sizeof(int) / sizeof(char) ) < (DISK_SIZE/PAGE_SIZE); i++)
+	for (i = 0; i < (DISK_SIZE/PAGE_SIZE); i++)
 	{
-		
-		if (temp[i] != mask)
+		if (global.diskBuffer[i] != 1)
 		{
-			int offset = 0;
-			i = i * ( sizeof(int) / sizeof(char) );
-			for (offset = 0; offset < ( sizeof(int) / sizeof(char) ); offset++)
-			{
-				if (global.diskBuffer[i + offset] == 0)
-				{
-					return i + offset;
-				}
-			}
+			return i;
 		}
 	}
 	return -1;//无空闲，返回-1
@@ -140,9 +125,9 @@ int FindTotalFreeBufferMem()				//查找内存中所有空闲位图的数目总�
 	return sum;
 }
 
-void MaskBuffer(char *buffer, int numOfBit)				//置特定位图的值为1
+void MaskBuffer(char *buffer, int numOfByte)				//置特定位图的值为1
 {
-	buffer[numOfBit] = 1;
+	buffer[numOfByte] = 1;
 }
 
 void ClearBuffer(char *buffer, int numOfBit)			//置特定位图的值为0

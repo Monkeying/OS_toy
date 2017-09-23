@@ -15,7 +15,7 @@ typedef struct{
 
 	struct linnerPageRecord *linnerPageList;//表示逻辑页面的分配情况
 	struct memPageRecord *memMMU[MEM_SIZE/PAGE_SIZE];//纪录mem中物理页表对应的逻辑页表
-	struct diskPageRecord *diskMMU[MEM_SIZE/PAGE_SIZE];//纪录disk中l页表对应的逻辑页表
+	struct diskPageRecord *diskSwapedPageList;//纪录disk中页表对应的逻辑页表
 	struct processEntry *processEntryList;//在内存中的所有进程
 }GLOBAL;
 

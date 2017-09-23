@@ -16,7 +16,6 @@ int _write(unsigned int virAddr, unsigned int size, unsigned int count, void *bu
 	int linnerAddr = VirAddr2LinnerAddr(virAddr);//获取线性地址,在非分页结构下，等同于物理地址
 	if (linnerAddr < 0)
 	{
-		printf("linner Addr %d virAddr %d\n", linnerAddr,virAddr);
 		return -1;
 	}
 	int length = size * count;
@@ -71,22 +70,22 @@ int _write(unsigned int virAddr, unsigned int size, unsigned int count, void *bu
 			}
 			left_count -= count;
 		}
+		if (size == 1 && count > 1)//字符串
+		{
+			fputc('0',global.mem);
+		}	
 	}
 	else
 	{
-		int phyAddr = GetPhyAddr(processName, linnerAddr);//获取物理地址			
+		int phyAddr = GetPhyAddr(processName, linnerAddr);//获取物理地址	
 		if (phyAddr >= 0)
 		{
-			unsigned int page_num = phyAddr / PAGE_SIZE;			
-			for (i = 0; i < MEM_SIZE/PAGE_SIZE ; i++)
+			fseek(global.mem, phyAddr, 0);							
+			fwrite(buffer, size, count, global.mem);	
+			if (size == 1 && count > 1)//字符串
 			{
-				if (global.memMMU[i] != NULL && global.memMMU[i]->page_num == page_num)//找到内存中该逻辑页对应的物理页
-				{
-					fseek(global.mem, phyAddr, 0);							
-					fwrite(buffer, size, count, global.mem);
-					break;											
-				}				
-			}						
+				fputc('0',global.mem);
+			}									
 		}
 	}
 	return 1;
@@ -94,6 +93,10 @@ int _write(unsigned int virAddr, unsigned int size, unsigned int count, void *bu
 
 void *_read(unsigned int virAddr, unsigned int size, unsigned int count)//读出字节
 {
+	if (size == 1 && count > 1)//字符串
+	{
+		count++;//多读一个\0
+	}
 	void *buffer = (void *)malloc(size*count);
 	int i = 0;
 	unsigned char processName = (virAddr & 0xff000000)>>24;//进程唯一识别符
@@ -112,40 +115,26 @@ void *_read(unsigned int virAddr, unsigned int size, unsigned int count)//读出
 			int phyAddr = GetPhyAddr(processName, linnerAddr);//获取物理地址			
 			if (phyAddr >= 0)
 			{
-				unsigned int page_num = phyAddr / PAGE_SIZE;			
-				for (i = 0; i < MEM_SIZE/PAGE_SIZE ; i++)
+				unsigned int page_num = phyAddr / PAGE_SIZE;	
+				void *Buffer;
+				switch (size)
 				{
-					if (global.memMMU[i] != NULL && global.memMMU[i]->page_num == page_num)//找到内存中该逻辑页对应的物理页
-					{
-						void *Buffer;
-						switch (size)
-						{
-							case sizeof(char):
-								Buffer = &((char *)buffer)[result_offset];
-							case sizeof(int):
-								Buffer = &((int *)buffer)[result_offset];
-							case sizeof(double):
-								Buffer = &((double *)buffer)[result_offset];
-							default:
-								Buffer = &((char *)buffer)[result_offset];
-						}						
-						fseek(global.mem, phyAddr, 0);							
-						fread(Buffer, size, count, global.mem);		
-						result_offset += count;				
-						break;											
-					}				
+					case sizeof(char):
+						Buffer = &((char *)buffer)[result_offset];
+					case sizeof(int):
+						Buffer = &((int *)buffer)[result_offset];
+					case sizeof(double):
+						Buffer = &((double *)buffer)[result_offset];
+					default:
+						Buffer = &((char *)buffer)[result_offset];
 				}						
+				fseek(global.mem, phyAddr, 0);							
+				fread(Buffer, size, count, global.mem);		
+				result_offset += count;													
 			}
 			linnerPage++;
 			tempLinnerAddr = linnerPage * PAGE_SIZE;
-			if (left_count >= PAGE_SIZE / size )//剩余超过一页
-			{
-				count = PAGE_SIZE / size;				
-			}
-			else
-			{
-				count = left_count;
-			}
+			count = left_count < PAGE_SIZE / size ? left_count:PAGE_SIZE / size;//剩余超过一页
 			left_count -= count;
 		}
 	}
@@ -154,27 +143,19 @@ void *_read(unsigned int virAddr, unsigned int size, unsigned int count)//读出
 		int phyAddr = GetPhyAddr(processName, linnerAddr);//获取物理地址	
 		if (phyAddr >= 0)
 		{
-			unsigned int page_num = phyAddr / PAGE_SIZE;
-			for (i = 0; i < MEM_SIZE/PAGE_SIZE ; i++)
-			{
-				if (global.memMMU[i] != NULL && global.memMMU[i]->page_num == page_num)//找到内存中该逻辑页对应的物理页
-				{
-					fseek(global.mem, phyAddr, 0);						
-					fread(buffer, size, count, global.mem);	
-					break;											
-				}				
-			}						
+			fseek(global.mem, phyAddr, 0);						
+			fread(buffer, size, count, global.mem);	
 		}
 	}
 	return buffer;
 }
 
-unsigned int _mallocSegment(int sizeInByte)//申请一段地址，返回逻辑段首页逻辑地址
+int _mallocSegment(int sizeInByte)//申请一段地址，返回逻辑段首页逻辑页号
 {
 	//首次适应逻辑页面分配
 	struct linnerPageRecord *tempPtr = global.linnerPageList;
 	int sizeInpage = sizeInByte / PAGE_SIZE + (sizeInByte % PAGE_SIZE==0 ? 0 : 1); 
-	while (tempPtr != NULL)
+	while (tempPtr != NULL)//遍历逻辑页表空间
 	{
 		if (tempPtr->size >= sizeInpage)
 		{
@@ -201,7 +182,7 @@ unsigned int _mallocSegment(int sizeInByte)//申请一段地址，返回逻辑�
 			int linnerPage = 0;
 			for (linnerPage = mallocFirstPage; linnerPage < mallocFirstPage + sizeInpage; linnerPage++)
 			{
-				int pageInMem = FindFreeBufferMem();
+				int pageInMem = FindFreeBufferMem();//查找内存中的物理页
 				if (pageInMem >= 0)
 				{
 					global.memBuffer[pageInMem] = 1;//该物理页置为已被使用
@@ -213,22 +194,52 @@ unsigned int _mallocSegment(int sizeInByte)//申请一段地址，返回逻辑�
 					global.memMMU[pageInMem]->isModified = 0;
 					global.memMMU[pageInMem]->isReadable = 1;				
 				}
-				else
+				else//当内存不够分配时，将一部分分配到磁盘中
 				{
-					;//当内存不够分配时，将一部分分配到磁盘中
+					int pageInDisk = FindFreeBufferDisk();//查找磁盘中的空物理页
+
+					if (pageInDisk >= 0)//磁盘有空闲空间
+					{
+						global.diskBuffer[pageInDisk] = 1;
+						if (global.diskSwapedPageList != NULL)//纪录空闲空间被逻辑页的使用情况
+						{
+							struct diskPageRecord *tempPtr = global.diskSwapedPageList;
+							while(tempPtr->nextSwapedPageRecord != NULL)
+							{
+								tempPtr = tempPtr->nextSwapedPageRecord;
+							}
+							tempPtr->nextSwapedPageRecord = (struct diskPageRecord *)malloc(sizeof(struct diskPageRecord));
+							tempPtr->nextSwapedPageRecord->linnerPage_num = linnerPage;
+							tempPtr->nextSwapedPageRecord->page_numInDisk = pageInDisk;
+							tempPtr->nextSwapedPageRecord->isFromMem = 0;
+							tempPtr->nextSwapedPageRecord->nextSwapedPageRecord = NULL;
+						}
+						else
+						{
+							global.diskSwapedPageList = (struct diskPageRecord *)malloc(sizeof(struct diskPageRecord));
+							global.diskSwapedPageList->linnerPage_num = linnerPage;
+							global.diskSwapedPageList->page_numInDisk = pageInDisk;
+							global.diskSwapedPageList->isFromMem = 0;
+							global.diskSwapedPageList->nextSwapedPageRecord = NULL;
+						}
+					}
+					else
+					{
+						return -2;//磁盘空间已满
+					}
 				}
-			}			
+			}
 			return mallocFirstPage;
 		}
 		tempPtr = tempPtr->nextLinnerPage;
 	}
-	return -1;
+	return -1;//逻辑地址已满
 }
+
 unsigned int _freeSegment(unsigned int firstLinnerPage_num, int sizeInpage)//释放逻辑地址中的一段地址
 {
-	printf("firstLinnerPage_num: %d sizeInpage: %d\n",firstLinnerPage_num,sizeInpage);
-	//释放该逻辑段中在内存中的页
 	int i = 0, j = 0;
+	//释放该逻辑段中在内存中的页
 	for (i = firstLinnerPage_num; i < firstLinnerPage_num + sizeInpage; i++)
 	{
 		for (j = 0; j < MEM_SIZE / PAGE_SIZE; j++)
@@ -242,6 +253,26 @@ unsigned int _freeSegment(unsigned int firstLinnerPage_num, int sizeInpage)//释
 				break;
 			}
 		}
+	}
+	//释放该逻辑段中在磁盘中的页
+	for (i = firstLinnerPage_num; i < firstLinnerPage_num + sizeInpage; i++)
+	{
+		if (global.diskSwapedPageList != NULL)
+		{
+			struct diskPageRecord *tempPtr = global.diskSwapedPageList;		
+			while (tempPtr->nextSwapedPageRecord != NULL)
+			{
+				if (tempPtr->nextSwapedPageRecord->linnerPage_num == i)
+				{
+					struct diskPageRecord *tempPtr1 = tempPtr->nextSwapedPageRecord;
+					tempPtr->nextSwapedPageRecord = tempPtr->nextSwapedPageRecord->nextSwapedPageRecord;
+					global.diskBuffer[tempPtr->nextSwapedPageRecord->page_numInDisk] = 0;//空闲
+					free(tempPtr1);
+					break;
+				}
+				tempPtr = tempPtr->nextSwapedPageRecord;
+			}
+		}		
 	}
 	//释放逻辑段地址
 	if (global.linnerPageList != NULL)//还有空闲区
@@ -357,10 +388,12 @@ int _malloc(unsigned char processName, int sizeInByte)//一个程序段内的分
 	}
 	return -2;//查无此程序
 }
+
 unsigned int _free(unsigned int virAddr)
 {
 	return 1;//段内释放不写
 }
+
 int VirAddr2LinnerAddr(unsigned int virAddr)			//虚地址和实地址的转换
 {
 	unsigned char processName = (virAddr & 0xff000000)>>24;//获取前8位段项,这里的段项和processEntry有啥关系不？
@@ -370,7 +403,6 @@ int VirAddr2LinnerAddr(unsigned int virAddr)			//虚地址和实地址的转换
 	int i = 0;
 	int linnerAddr = 0;
 
-	//printf("processName in VirAddr2LinnerAddr %d\n", processName);
 	struct processEntry *tempPtr = global.processEntryList;
 	while (tempPtr != NULL)
 	{
@@ -396,21 +428,32 @@ int GetPhyAddr(unsigned char processName, int linnerAddr)		//由线性地址计�
 	int i = 0;
 	unsigned int page_num = linnerAddr / PAGE_SIZE;//逻辑页
 	unsigned int page_offset = linnerAddr % PAGE_SIZE;
-	for (i = 0; i < MEM_SIZE/PAGE_SIZE && global.memMMU[i] != NULL; i++)
+	for (i = 0; i < MEM_SIZE/PAGE_SIZE && global.memMMU[i] != NULL; i++)//查找内存中的物理页
 	{
 		if (global.memMMU[i]->page_num == page_num)//该逻辑页在内存中
 		{
 			return i*PAGE_SIZE + page_offset;//返回该物理页（内存中）地址+页内偏移
 		}
 	}
-	//该逻辑页在磁盘中
-	unsigned int swapOutPage = PageSwapStratgy(processName);
-	PageSwap(page_num, swapOutPage);//将该逻辑页换到内存中
-	return swapOutPage*PAGE_SIZE + page_offset;
+	//该逻辑页在磁盘中	
+	struct diskPageRecord *tempPtr = global.diskSwapedPageList;
+	while (tempPtr != NULL)
+	{
+		if (tempPtr->linnerPage_num == page_num)
+		{
+			unsigned int swapOutPage = PageSwapStratgy(processName);//内存中可以换出的物理页号
+			PageSwap(tempPtr->page_numInDisk, swapOutPage, page_num);//将该逻辑页从磁盘物理页换到内存物理页中
+			return swapOutPage*PAGE_SIZE + page_offset;
+		}
+		tempPtr = tempPtr->nextSwapedPageRecord;
+	}
+	//该逻辑页没有纪录
+	return -1;
 }
-int PageSwap(unsigned int pageInDisk, unsigned int pageInMem)			//页的换入/换出
+
+int PageSwap(unsigned int pageInDisk, unsigned int pageInMem, unsigned int linnerPage_num)			//页的换入/换出
 {
-	printf("inDisk:%d inMem:%d\n",pageInDisk,pageInMem);
+	//printf(" PAGESWAP  inDisk:%d inMem:%d\n",pageInDisk,pageInMem);
 	char temp;
 	int i = 0;
 	if (global.memMMU[pageInMem] == NULL)//相当于直接从磁盘读入内存
@@ -419,31 +462,45 @@ int PageSwap(unsigned int pageInDisk, unsigned int pageInMem)			//页的换入/�
 		global.memMMU[pageInMem]->isModified = 0;//剩下的初始化在后面完成
 		global.memBuffer[pageInMem] = 1;//该内存物理页面被使用
 	}
-	if (global.memMMU[pageInMem]->isModified)//当存在改动的时候需要将其写回(新分配的时候需要将其都置为0)
+	if (global.memMMU[pageInMem]->isModified == 1)//当存在改动的时候需要将其写回(新分配的时候需要将其都置为0)
 	{
-		fseek(global.disk, global.memMMU[pageInMem]->phyAddrInDisk, 0);
-		fseek(global.mem,  pageInMem * PAGE_SIZE, 0);
-		
-		for (i = 0; i < PAGE_SIZE; i++)
+		if (global.memMMU[pageInMem]->phyAddrInDisk % PAGE_SIZE == 0)//该内存页从磁盘里来
 		{
-			temp = fgetc(global.mem);
-			fputc(temp, global.disk);
-		}
+			fseek(global.disk, global.memMMU[pageInMem]->phyAddrInDisk, 0);
+			fseek(global.mem,  pageInMem * PAGE_SIZE, 0);
+			
+			for (i = 0; i < PAGE_SIZE; i++)
+			{
+				temp = fgetc(global.mem);
+				fputc(temp, global.disk);
+			}	
+		}	
 	}
 
-	fseek(global.disk, pageInDisk * PAGE_SIZE - MEM_SIZE, 0);
-	//逻辑页在磁盘中的物理地址是pageInDisk * PAGE_SIZE - MEM_SIZE
+	unsigned int phyAddrInDisk = pageInDisk * PAGE_SIZE;
+	fseek(global.disk, phyAddrInDisk, 0);
 	fseek(global.mem,  pageInMem * PAGE_SIZE, 0);
-	for (i = 0; i < PAGE_SIZE; i++)
+	char tempPageDisk[PAGE_SIZE] = {0};
+	char tempPageMem[PAGE_SIZE] = {0};
+	for (i = 0; i < PAGE_SIZE; i++)//从磁盘中读出一页写入到内存
 	{
-		temp = fgetc(global.disk);
-		fputc(temp, global.mem);
+		tempPageDisk[i] = fgetc(global.disk);//从磁盘读出
+		tempPageMem[i] = fgetc(global.mem);//从内存读出
 	}
-	global.memMMU[pageInMem]->page_num = pageInDisk;
+	fseek(global.disk, phyAddrInDisk, 0);
+	fseek(global.mem,  pageInMem * PAGE_SIZE, 0);
+	for (i = 0; i < PAGE_SIZE; i++)//从磁盘中读出一页写入到内存
+	{
+		fputc(tempPageMem[i], global.disk);//写入磁盘读出
+		fputc(tempPageDisk[i], global.mem);//写入内存
+	}
+
+	//内存物理页纪录
+	global.memMMU[pageInMem]->page_num = linnerPage_num;
 	time( &global.memMMU[pageInMem]->timeStamp );//纪录换入时间
 	global.memMMU[pageInMem]->isModified = 0;
 	global.memMMU[pageInMem]->isReadable = 1;
-	global.memMMU[pageInMem]->phyAddrInDisk = pageInDisk * PAGE_SIZE - MEM_SIZE;
+	global.memMMU[pageInMem]->phyAddrInDisk = pageInDisk * PAGE_SIZE;//内存页和磁盘页的匹配信息，% PAGE_SIZE == 0
 
 	return 1;
 }
@@ -451,7 +508,7 @@ int PageSwap(unsigned int pageInDisk, unsigned int pageInMem)			//页的换入/�
 unsigned int PageSwapStratgy(unsigned char processName)//得到该段中可以换出的页表下标，FIFO
 {
 	int i = 0;
-	int freePage = GetFreePageAddr();
+	int freePage = FindFreeBufferMem();
 	if (freePage != -1)
 	{
 		return freePage;//内存中第一个空页表
@@ -463,6 +520,7 @@ unsigned int PageSwapStratgy(unsigned char processName)//得到该段中可以�
 		{
 			if (tempPtr->processName == processName)
 			{
+				int fisrtInPage = -1;
 				int page_count = tempPtr->size/PAGE_SIZE;
 				if (tempPtr->size % PAGE_SIZE != 0)
 				{
@@ -470,8 +528,7 @@ unsigned int PageSwapStratgy(unsigned char processName)//得到该段中可以�
 				}
 				int j = 0;
 				for (i = 0, j = 0; i < page_count; i++)
-				{					
-					unsigned int fisrtInPage = 0;
+				{										
 					time_t tempTimeStamp = 0xffffffff;
 					for (j = 0; j < MEM_SIZE/PAGE_SIZE; j++)
 					{
@@ -482,25 +539,13 @@ unsigned int PageSwapStratgy(unsigned char processName)//得到该段中可以�
 						}
 					}
 				}
-				return j;//该程序段中最早进来的一页
+				if (fisrtInPage != -1)
+				{
+					return fisrtInPage;//该程序段中最早进来的一页
+				}				
 			}
 			tempPtr = tempPtr->nextProcess;
 		}
+		return 1;//该段不在内存内，需要在其他段中换出一页，这里直接简化为固定换出1号页	
 	}
 }
-
-int GetFreePageAddr()									//在内存未满的情况下发生缺页异常，返回内存中的空闲页地址
-{
-	return  FindFreeBufferMem();
-}
-
-
-
-/*TEST 
-main()
-{
-	Initialize();
-	printf("%d\n",_write("baseProcess",0x00000110,0x55));
-	printf("%x\n",_read("baseProcess",0x00000110) );
-}
-*/

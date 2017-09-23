@@ -24,6 +24,14 @@ struct memPageRecord{
 	int isReadable;
 };
 
+//磁盘物理页与逻辑页对应关系
+struct diskPageRecord{
+	unsigned int page_numInDisk;
+	unsigned int linnerPage_num;
+	int isFromMem;
+	struct diskPageRecord *nextSwapedPageRecord;
+};
+
 //逻辑页空闲纪录
 struct linnerPageRecord{
 	struct linnerPageRecord *preLinnerPage;

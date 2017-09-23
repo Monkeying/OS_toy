@@ -271,21 +271,29 @@ int main()
 	unsigned char pid = 1;
 	CreateProcess(pid, PAGE_SIZE);
 
-	int i = int(pid);
+	_int i = _int(pid);
 	i = -100;
 	printf("%d\n",+i);
 	i = 200;
 	printf("%d\n",+i);
 	for (i = 0; i < 5; i++)
 	{
-		printf("%d\n",+i);	
+		printf("%d\n",(+i) + 1);	
 	}
 
 	int_ARRAY a = int_ARRAY(pid, 5);
-	for (i = 0; i < 5; i++)
+	for (i = 0; i < 5; i++)	
 	{
 		a.assignment(+i, +i);
 		printf("%d\n",a[+i]);
+	}
+	int_ARRAY *array = &int_ARRAY(pid, 5*2);
+	for (i = 0; i < 5; i++)	
+	{
+		array[+i][0].assignment(+i, +i);
+		array[+i][1].assignment(+i, (+i) + 1);
+		
+		printf("%d %d\n",a[+i][0],a[+i][1]);
 	}
 }
 /*

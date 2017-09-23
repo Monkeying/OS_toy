@@ -7,7 +7,8 @@
 
 */
 
-#define MEM_SIZE 0x4000000//64MB
+//#define MEM_SIZE 0x4000000//64MB
+#define MEM_SIZE 0x3000//12KB
 
 #define DISK_SIZE 0x20000000//512MB
 
